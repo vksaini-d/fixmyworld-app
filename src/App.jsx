@@ -8,13 +8,19 @@ import {
   doc, updateDoc, increment, arrayUnion // Added imports for Phases 4/5
 } from 'firebase/firestore'; 
 
-// --- Firebase Config (from environment) ---
-// These global variables are provided by the environment.
-const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {};
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+// NEW CODE:
+const firebaseConfig = {
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID
+};
 
 // --- Weather API Key (from user) ---
-const WEATHER_API_KEY = 'b03106e65ed04eecb8885856251211';
+
+const WEATHER_API_KEY = import.meta.env.VITE_WEATHER_API_KEY;
 
 // --- Category Definitions ---
 // A shared list of categories for the app
@@ -132,6 +138,7 @@ export default function App() {
           setIsAuthReady(true);
         } else {
           try {
+            // Note: __initial_auth_token will be undefined in production
             if (typeof __initial_auth_token !== 'undefined' && __initial_auth_token) {
               await signInWithCustomToken(authInstance, __initial_auth_token);
             } else {
@@ -155,7 +162,8 @@ export default function App() {
     if (!isAuthReady || !db) return;
 
     setLoadingIssues(true);
-    const collectionPath = `/artifacts/${appId}/public/data/issues`;
+    // --- THIS PATH IS NOW CORRECT ---
+    const collectionPath = 'issues';
     const issuesQuery = query(collection(db, collectionPath));
 
     // onSnapshot creates a real-time listener
@@ -472,7 +480,7 @@ const MapDashboardView = ({ issues, loading, error, setSelectedIssueId }) => {
       <div className="flex flex-col md:flex-row md:space-x-4">
         
         {/* --- Sidebar (Filters + List) --- */}
-        <div className="w-full md:w-1D3">
+        <div className="w-full md:w-1/3">
           <div className="rounded-xl bg-gray-900/50 backdrop-blur-md border border-cyan-500/30 p-4 shadow-lg">
             <h2 className="mb-4 text-xl font-orbitron text-cyan-400">Filters</h2>
             
@@ -569,12 +577,19 @@ const IssueDetailView = ({ db, appId, userId, issueId, onBack }) => {
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   // --- Get Issue Doc Path ---
-  const issueDocPath = `/artifacts/${appId}/public/data/issues/${issueId}`;
+  // --- THIS PATH IS NOW CORRECT ---
+  const issueDocPath = `issues/${issueId}`;
   const issueRef = doc(db, issueDocPath);
 
   // --- Real-time Data Fetching for ONE issue ---
   useEffect(() => {
     setLoading(true);
+    // We need to check if issueRef is valid before subscribing
+    if (!issueRef) {
+        setError("Invalid issue ID.");
+        setLoading(false);
+        return;
+    }
     const unsubscribe = onSnapshot(issueRef, (doc) => {
       if (doc.exists()) {
         setIssue({ id: doc.id, ...doc.data() });
@@ -590,11 +605,12 @@ const IssueDetailView = ({ db, appId, userId, issueId, onBack }) => {
 
     // Cleanup listener
     return () => unsubscribe();
-  }, [issueRef]);
+  }, [issueRef]); // Rerun if issueRef changes (e.g., new issueId)
 
   // --- Action Handlers ---
 
   const handleUpvote = async () => {
+    if (!issueRef) return;
     try {
       await updateDoc(issueRef, {
         votes: increment(1) // Atomically increment the vote count
@@ -605,6 +621,7 @@ const IssueDetailView = ({ db, appId, userId, issueId, onBack }) => {
   };
 
   const handleUpdateStatus = async (newStatus) => {
+    if (!issueRef) return;
     try {
       await updateDoc(issueRef, {
         status: newStatus
@@ -616,7 +633,7 @@ const IssueDetailView = ({ db, appId, userId, issueId, onBack }) => {
 
   const handleAddComment = async (e) => {
     e.preventDefault();
-    if (!newComment.trim()) return;
+    if (!newComment.trim() || !issueRef) return;
     setIsSubmitting(true);
 
     const commentData = {
@@ -1015,7 +1032,8 @@ const ReportIssueView = ({ db, appId, userId, isAuthReady, onLocationFound }) =>
       };
 
       // --- Save to Firestore ---
-      const collectionPath = `/artifacts/${appId}/public/data/issues`;
+      // --- THIS PATH IS NOW CORRECT ---
+      const collectionPath = 'issues';
       const docRef = await addDoc(collection(db, collectionPath), issueData);
 
       // --- Success ---
@@ -1322,13 +1340,6 @@ const ReportIcon = () => (
 );
 
 const ClockIcon = () => (
-  <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-    <circle cx="12" cy="12" r="10"></circle>
-    <polyline points="12 6 12 12 16 14"></polyline>
-  </svg>
-);
-
-const CheckIcon = () => (
   <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
     <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
     <polyline points="22 4 12 14.01 9 11.01"></polyline>
