@@ -76,7 +76,8 @@ export default function App() {
   // --- New state for Weather Effects ---
   const [weather, setWeather] = useState(null);
   const [weatherError, setWeatherError] = useState(null);
-
+ 
+const appId = import.meta.env.VITE_FIREBASE_APP_ID;
   // --- Firebase State ---
   const [db, setDb] = useState(null);
   const [auth, setAuth] = useState(null);
