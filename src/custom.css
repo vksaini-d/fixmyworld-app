@@ -1,0 +1,43 @@
+/* For the animated neon border effect */
+@keyframes neon-border {
+  0%, 100% { border-color: #0ea5e9; box-shadow: 0 0 5px #0ea5e9; }
+  25% { border-color: #ec4899; box-shadow: 0 0 5px #ec4899; }
+  50% { border-color: #10b981; box-shadow: 0 0 5px #10b981; }
+  75% { border-color: #f59e0b; box-shadow: 0 0 5px #f59e0b; }
+}
+
+.neon-border-animated {
+  border: 1px solid #0ea5e9; /* Start with a base border */
+  animation: neon-border 6s linear infinite;
+}
+
+/* Leaflet Popup Fix 
+  This makes the map popups match your app's dark theme.
+*/
+.leaflet-popup-content-wrapper {
+  background: #1f2937; /* bg-gray-800 */
+  color: #d1d5db; /* text-gray-300 */
+  border-radius: 8px;
+  box-shadow: 0 3px 14px rgba(0,0,0,0.4);
+  border: 1px solid #0ea5e9;
+}
+.leaflet-popup-content {
+  margin: 13px 19px;
+  line-height: 1.4;
+  font-family: 'Share Tech Mono', monospace;
+}
+.leaflet-popup-content p {
+  margin: 10px 0;
+}
+.leaflet-popup-content h3 {
+  font-family: 'Orbitron', sans-serif;
+  color: #0ea5e9; /* text-cyan-400 */
+  font-weight: bold;
+  margin-top: 0;
+}
+.leaflet-popup-tip {
+  background: #1f2937; /* bg-gray-800 */
+}
+.leaflet-container a.leaflet-popup-close-button {
+  color: #d1d5db;
+}
